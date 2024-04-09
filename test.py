@@ -90,27 +90,20 @@ class Server:
                     iqr[0][node_index]
                 ])
                 
-        """with open('oveall_results.csv', mode='w', newline='') as file:
+        with open('oveall_results.csv', mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['Test', 'True Positive', 'False Positive', 'True Negative', 'False Negative'])
-            
-            # Z test
-            #writer.writerow([
-            #    "Z-Test",
-            #    
-            #])
 
-            for node_index in range(self.num_nodes):
+            tests = [z_score, binom, isol, chi, iqr]
+
+            for i in range(4):
                 writer.writerow([
-                    node_index, 
-                    self.nodes[node_index].get_node_type(), 
-                    z_score[node_index], 
-                    binom[node_index],
-                    isol[node_index], 
-                    chi[node_index],
-                    iqr[node_index]
+                    tests[i][0], 
+                    tests[i][2],
+                    tests[i][3],
+                    tests[i][4],
                 ])
-        """
+        
 
 def perform_ML_test(server, epochs=100, batch_size=2, threshold_quantile=0.9):
         # Convert results to DataFrame for easier processing
@@ -232,7 +225,7 @@ def perform_z_score_test(server, expected_success_rate=0.97, threshold=-1.96):
     print(f"False Negatives: {false_negatives}")
     print(f"Success Rate: {success_rate:.2f}")
 
-    return nodes, true_positives, false_positives, true_negatives, false_negatives
+    return "Z-Score", nodes, true_positives, false_positives, true_negatives, false_negatives
 
 def perform_binomial_test(server, significance_level=0.05, one_tailed=True):
     true_positives = 0
@@ -279,7 +272,7 @@ def perform_binomial_test(server, significance_level=0.05, one_tailed=True):
           f"True Negatives: {true_negatives}, False Negatives: {false_negatives}, "
           f"Success Rate: {success_rate:.2f}")
     
-    return nodes, true_positives, false_positives, true_negatives, false_negatives
+    return "Binomial", nodes, true_positives, false_positives, true_negatives, false_negatives
 
 """""""""""""""
 def return_anomalies_iqr(self, server,  multiplier=1.5):
