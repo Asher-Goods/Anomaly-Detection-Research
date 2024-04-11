@@ -83,25 +83,26 @@ class Server:
                 writer.writerow([
                     node_index, 
                     self.nodes[node_index].get_node_type(), 
-                    z_score[0][node_index], 
-                    binom[0][node_index],
-                    isol[0][node_index], 
-                    chi[0][node_index],
-                    iqr[0][node_index]
+                    z_score[1][node_index], 
+                    binom[1][node_index],
+                    isol[1][node_index], 
+                    chi[1][node_index],
+                    iqr[1][node_index]
                 ])
                 
-        with open('oveall_results.csv', mode='w', newline='') as file:
+        with open('overall_results.csv', mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['Test', 'True Positive', 'False Positive', 'True Negative', 'False Negative'])
 
             tests = [z_score, binom, isol, chi, iqr]
 
-            for i in range(4):
+            for i in range(5):
                 writer.writerow([
                     tests[i][0], 
                     tests[i][2],
                     tests[i][3],
                     tests[i][4],
+                    tests[i][5]
                 ])
         
 
@@ -177,7 +178,7 @@ def perform_ML_test(server, epochs=100, batch_size=2, threshold_quantile=0.9):
 
         return anomaly_indices
 
-def perform_z_score_test(server, expected_success_rate=0.97, threshold=-1.96):
+def perform_z_score_test(server, expected_success_rate=0.97, threshold=-1.5):
     results = server.get_results()
     # Standard deviation for the expected success rate
     std_dev = math.sqrt(expected_success_rate * (1 - expected_success_rate))
@@ -356,7 +357,7 @@ def perform_chi_squared_test(server):
         elif (res.statistic<100 & server.nodes[i].get_node_type() == 1):
             true_negatives+=1
 
-    return outdata,true_negatives,true_positives,false_negatives,false_positives
+    return "Chi-Squared", outdata,true_negatives,true_positives,false_negatives,false_positives
 
 """def apply_isolation_forest(server):
     # Preparing data with true labels
@@ -426,7 +427,7 @@ def main():
     print("Performing Isolation Forrest Classification")
     #isolation_forrest = apply_isolation_forest(server)
 
-    server.write_csv(nodes_z, nodes_binom, chisquare_anomalies, nodes_z, nodes_z)
+    server.write_csv(nodes_z, nodes_binom, chisquare_anomalies, nodes_binom, nodes_z)
 
 
 if __name__ == "__main__":
