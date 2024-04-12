@@ -438,9 +438,9 @@ def main():
     chisquare_anomalies=perform_chi_squared_test(server)
 
     print("Performing Isolation Forrest Classification")
-    #isolation_forrest = apply_isolation_forest(server)
+    isolation_forest = apply_isolation_forest(server)
 
-    server.write_csv(nodes_z, nodes_binom, chisquare_anomalies, nodes_binom, nodes_z)
+    server.write_csv(nodes_z, nodes_binom, isolation_forest, chisquare_anomalies, nodes_binom)
 
 
 if __name__ == "__main__":
