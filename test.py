@@ -5,8 +5,7 @@ from scipy.stats import binomtest
 import numpy as np
 import pandas as pd
 #travis imports
-from sklearn.metrics import accuracy_score
-from sklearn.ensemble import IsolationForest
+
 
 from scipy.stats import chisquare
 
@@ -16,6 +15,11 @@ from keras.layers import Input, Dense
 from keras.optimizers import Adam
 from sklearn.preprocessing import MinMaxScaler
 from keras.regularizers import l1_l2
+
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+
 
 
 
@@ -359,46 +363,50 @@ def perform_chi_squared_test(server):
 
     return "Chi-Squared", outdata,true_negatives,true_positives,false_negatives,false_positives
 
-"""def apply_isolation_forest(server):
+
+def apply_isolation_forest(server):
     # Preparing data with true labels
     data = {
         "node_index": [],
         "success_rate": [],
-        "true_label": []  # Adjusted to use 0 for normal, 1 for anomaly as per your request
+        "true_label": []  # Add a column for true labels
     }
     for node_index, node in enumerate(server.nodes):
         operations = server.results[node_index]
         success_rate = sum(operations) / len(operations)
         data["node_index"].append(node_index)
         data["success_rate"].append(success_rate)
-        # Adjusted the labeling here as well
+        # Assuming node_type 1 is normal (label as 0) and 0 is anomaly (label as 1)
         data["true_label"].append(0 if node.get_node_type() == 1 else 1)
 
     df = pd.DataFrame(data)
 
-    # Applying Isolation Forest
-    isolation_forest = IsolationForest(n_estimators=100, random_state=42, contamination='auto')
+    # Applying Isolation Forest with a contamination factor of 0.1
+    isolation_forest = IsolationForest(n_estimators=100, random_state=42, contamination=0.01)
     predictions = isolation_forest.fit_predict(df[['success_rate']])
-    
     # Transform predictions: -1 (anomaly) becomes 1, 1 (normal) becomes 0
     df['is_anomaly'] = [1 if x == -1 else 0 for x in predictions]
 
-    # Calculate accuracy using true labels and predicted anomalies
-    accuracy = accuracy_score(df['true_label'], df['is_anomaly'])
+    # Extracting the true labels and predictions
+    true_labels = df['true_label']
+    anomaly_predictions = df['is_anomaly']
 
-    # Calculate confusion matrix to get TP, FP, TN, FN
-    tn, fp, fn, tp = confusion_matrix(df['true_label'], df['is_anomaly']).ravel()
+    # Calculating confusion matrix components and accuracy
+    tn, fp, fn, tp = confusion_matrix(true_labels, anomaly_predictions).ravel()
+    accuracy = accuracy_score(true_labels, anomaly_predictions)
 
-    # Exporting results to a CSV file
-    df.to_csv('anomaly_detection_results.csv', index=False)
-    print("Anomaly detection results exported to anomaly_detection_results.csv.")
+    metrics = {
+        'TP': tp,
+        'FP': fp,
+        'TN': tn,
+        'FN': fn,
+        'Accuracy': accuracy
+    }
+
+    # Print the confusion matrix components
+    print(f"Confusion Matrix: TP={tp}, FP={fp}, TN={tn}, FN={fn}")
     print(f"Anomaly detection accuracy: {accuracy:.2f}")
-    
-    print(f"True Positives: {tp}, False Positives: {fp}, True Negatives: {tn}, False Negatives: {fn}")
-    
-    # Returning the metrics as a dictionary for further use if necessary
-    return {'accuracy': accuracy, 'TP': tp, 'FP': fp, 'TN': tn, 'FN': fn}
-        """
+
 def main():
     num_nodes = 100
     operations_per_node = 1000
