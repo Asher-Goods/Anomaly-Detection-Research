@@ -279,47 +279,61 @@ def perform_binomial_test(server, significance_level=0.05, one_tailed=True):
     
     return "Binomial", nodes, true_positives, false_positives, true_negatives, false_negatives
 
-"""""""""""""""
-def return_anomalies_iqr(self, server,  multiplier=1.5):
-    actual_anomaly = server.nodes[node_index].get_node_type() == 0
+
+def detect_anomalies_iqr(server, multiplier=0):
+    # Extract results and calculate success rates
+    results = server.get_results()
+    success_rates = [sum(ops) / len(ops) for ops in results.values()]
+
+    # Calculate the quartiles and IQR
+    Q1 = np.percentile(success_rates, 25)
+    Q3 = np.percentile(success_rates, 75)
+    IQR = Q3 - Q1
+
+    # Establish bounds for detecting anomalies
+    lower_bound = Q1-(IQR*.1)
+    upper_bound = Q3+(IQR*.1)
+
+    # Initialize counters
     true_positives = 0
     false_positives = 0
     true_negatives = 0
     false_negatives = 0
 
-    # Calculate success rates for each node
-    success_rates = [sum(self.results[node]) / len(self.results[node]) for node in self.results]
+    # Evaluate each node based on its success rate and actual type
+    for node_index, rate in enumerate(success_rates):
+        actual_anomaly = server.nodes[node_index].get_node_type() == 0
+        
+        print("lower_bound:", lower_bound)
+        print("rate:", rate)
+        print("upper_bound:", upper_bound)
 
-    # Calculate Q1, Q3, and IQR
-    Q1 = np.percentile(success_rates, 25)
-    Q3 = np.percentile(success_rates, 75)
-    IQR = Q3 - Q1
+        detected_anomaly = rate < lower_bound or rate > upper_bound
 
-    # Determine lower and upper bounds for anomalies
-    lower_bound = Q1 - multiplier * IQR
-    upper_bound = Q3 + multiplier * IQR
+        # Update the counters based on actual and detected conditions
+        if actual_anomaly and detected_anomaly:
+            true_positives += 1
+        elif not actual_anomaly and detected_anomaly:
+            false_positives += 1
+        elif not actual_anomaly and not detected_anomaly:
+            true_negatives += 1
+        elif actual_anomaly and not detected_anomaly:
+            false_negatives += 1
 
-    # Identify anomalies
-    anomalies = [i for i, rate in enumerate(success_rates) if rate < lower_bound or rate > upper_bound]
-    
-    nodes = []
+    # Print results
+    total_nodes = len(server.nodes)
+    success_rate = (true_positives + true_negatives) / total_nodes if total_nodes > 0 else 0
 
-    if anomalies:
-        nodes.append(1)
-    else:
-        nodes.append(0)
-    
-    if actual_anomaly and detected_anomaly:
-        true_positives += 1
-    elif not actual_anomaly and detected_anomaly:
-        false_positives += 1
-    elif not actual_anomaly and not detected_anomaly:
-        true_negatives += 1
-    elif actual_anomaly and not detected_anomaly:
-        false_negatives += 1
+    print(IQR)
 
-    return nodes
-    """
+    print(f"\nTrue Positives: {true_positives}")
+    print(f"False Positives: {false_positives}")
+    print(f"True Negatives: {true_negatives}")
+    print(f"False Negatives: {false_negatives}")
+    print(f"Success Rate: {success_rate:.2f}")
+
+    return "IQR",true_negatives,true_positives,false_negatives,false_positives
+
 
 def perform_chi_squared_test(server):
 
@@ -432,7 +446,7 @@ def main():
     nodes_binom = perform_binomial_test(server)
 
     print("\nPerforming IQR Test")
-    #iqr_anomalies = return_anomalies_iqr(server, 1.25)
+    iqr_anomalies = detect_anomalies_iqr(server)
 
     print("\nPerforming Chi-Square Test")
     chisquare_anomalies=perform_chi_squared_test(server)
@@ -440,7 +454,7 @@ def main():
     print("Performing Isolation Forrest Classification")
     isolation_forest = apply_isolation_forest(server)
 
-    server.write_csv(nodes_z, nodes_binom, isolation_forest, chisquare_anomalies, nodes_binom)
+    server.write_csv(nodes_z, nodes_binom, isolation_forest, chisquare_anomalies, iqr_anomalies)
 
 
 if __name__ == "__main__":
