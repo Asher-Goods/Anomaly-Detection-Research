@@ -299,6 +299,7 @@ def detect_anomalies_iqr(server, multiplier=0):
     false_positives = 0
     true_negatives = 0
     false_negatives = 0
+    nodes =[]
 
     # Evaluate each node based on its success rate and actual type
     for node_index, rate in enumerate(success_rates):
@@ -320,6 +321,11 @@ def detect_anomalies_iqr(server, multiplier=0):
         elif actual_anomaly and not detected_anomaly:
             false_negatives += 1
 
+        if detected_anomaly:
+            nodes.append(1)
+        else:
+            nodes.append(0)
+
     # Print results
     total_nodes = len(server.nodes)
     success_rate = (true_positives + true_negatives) / total_nodes if total_nodes > 0 else 0
@@ -332,7 +338,7 @@ def detect_anomalies_iqr(server, multiplier=0):
     print(f"False Negatives: {false_negatives}")
     print(f"Success Rate: {success_rate:.2f}")
 
-    return "IQR",true_negatives,true_positives,false_negatives,false_positives
+    return "IQR",nodes,true_negatives,true_positives,false_negatives,false_positives
 
 
 def perform_chi_squared_test(server):
@@ -383,6 +389,7 @@ def perform_chi_squared_test(server):
     print(f"Success Rate: {success_rate:.2f}")
 
     return "Chi-Squared", outdata,true_negatives,true_positives,false_negatives,false_positives,success_rate
+
 def apply_isolation_forest(server):
     # Preparing data with true labels
     data = {
@@ -426,6 +433,7 @@ def apply_isolation_forest(server):
     print(f"Confusion Matrix: TP={tp}, FP={fp}, TN={tn}, FN={fn}")
     print(f"Anomaly detection accuracy: {accuracy:.2f}")
 
+
 def main():
     num_nodes = 100
     operations_per_node = 1000
@@ -454,7 +462,7 @@ def main():
     print("Performing Isolation Forrest Classification")
     isolation_forest = apply_isolation_forest(server)
 
-    server.write_csv(nodes_z, nodes_binom, isolation_forest, chisquare_anomalies, iqr_anomalies)
+    server.write_csv(nodes_z, nodes_binom, nodes_z, chisquare_anomalies, iqr_anomalies)
 
 
 if __name__ == "__main__":
