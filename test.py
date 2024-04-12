@@ -279,7 +279,6 @@ def perform_binomial_test(server, significance_level=0.05, one_tailed=True):
     
     return "Binomial", nodes, true_positives, false_positives, true_negatives, false_negatives
 
-
 def detect_anomalies_iqr(server, multiplier=0):
     # Extract results and calculate success rates
     results = server.get_results()
@@ -339,7 +338,6 @@ def detect_anomalies_iqr(server, multiplier=0):
     print(f"Success Rate: {success_rate:.2f}")
 
     return "IQR",nodes,true_negatives,true_positives,false_negatives,false_positives
-
 
 def perform_chi_squared_test(server):
 
@@ -402,7 +400,6 @@ def apply_isolation_forest(server):
         success_rate = sum(operations) / len(operations)
         data["node_index"].append(node_index)
         data["success_rate"].append(success_rate)
-        # Assuming node_type 1 is normal (label as 0) and 0 is anomaly (label as 1)
         data["true_label"].append(0 if node.get_node_type() == 1 else 1)
 
     df = pd.DataFrame(data)
@@ -410,7 +407,6 @@ def apply_isolation_forest(server):
     # Applying Isolation Forest with a contamination factor of 0.1
     isolation_forest = IsolationForest(n_estimators=100, random_state=42, contamination=0.01)
     predictions = isolation_forest.fit_predict(df[['success_rate']])
-    # Transform predictions: -1 (anomaly) becomes 1, 1 (normal) becomes 0
     df['is_anomaly'] = [1 if x == -1 else 0 for x in predictions]
 
     # Extracting the true labels and predictions
@@ -421,18 +417,22 @@ def apply_isolation_forest(server):
     tn, fp, fn, tp = confusion_matrix(true_labels, anomaly_predictions).ravel()
     accuracy = accuracy_score(true_labels, anomaly_predictions)
 
-    metrics = {
-        'TP': tp,
-        'FP': fp,
-        'TN': tn,
-        'FN': fn,
-        'Accuracy': accuracy
-    }
+    # Print the results in a similar fashion to the Chi-Squared test
+    print("Isolation Forest Results")
+    print(f"Node Index: Anomaly Detection")
+    for i in range(len(df)):
+        print(f"{i}: {'Anomaly' if df.loc[i, 'is_anomaly'] == 1 else 'Normal'}")
 
-    # Print the confusion matrix components
-    print(f"Confusion Matrix: TP={tp}, FP={fp}, TN={tn}, FN={fn}")
-    print(f"Anomaly detection accuracy: {accuracy:.2f}")
+    print(f"\nTrue Positives: {tp}")
+    print(f"False Positives: {fp}")
+    print(f"True Negatives: {tn}")
+    print(f"False Negatives: {fn}")
+    print(f"Success Rate: {accuracy:.2f}")
 
+    # Optionally save to CSV
+    df.to_csv('anomaly_detection_results_isolation_forest.csv', index=False)
+
+    return "Isolation Forest", df['is_anomaly'].to_numpy(), tn, tp, fn, fp, accuracy
 
 def main():
     num_nodes = 100
@@ -462,8 +462,7 @@ def main():
     print("Performing Isolation Forrest Classification")
     isolation_forest = apply_isolation_forest(server)
 
-    server.write_csv(nodes_z, nodes_binom, nodes_z, chisquare_anomalies, iqr_anomalies)
-
+    server.write_csv(nodes_z, nodes_binom, isolation_forest, chisquare_anomalies, iqr_anomalies)
 
 if __name__ == "__main__":
     main()

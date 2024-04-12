@@ -1,6 +1,6 @@
 Test,True Positive,False Positive,True Negative,False Negative
-Z-Score,8,0,91,1
-Binomial,0,0,91,9
-Chi-Squared,91,9,0,0
-Binomial,0,0,91,9
-Z-Score,8,0,91,1
+Z-Score,10,0,89,1
+Binomial,0,0,89,11
+Isolation Forest,89,1,10,0
+Chi-Squared,89,11,0,0
+IQR,57,11,0,32
