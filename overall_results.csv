@@ -1,6 +1,6 @@
 Test,True Positive,False Positive,True Negative,False Negative
-Z-Score,49,0,48,3
-Binomial,0,0,48,52
-Chi-Squared,0,100,0,0
-Binomial,0,0,48,52
-Z-Score,49,0,48,3
+Z-Score,8,0,91,1
+Binomial,0,0,91,9
+Chi-Squared,91,9,0,0
+Binomial,0,0,91,9
+Z-Score,8,0,91,1

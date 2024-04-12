@@ -51,7 +51,7 @@ class Server:
 
         for _ in range(num_nodes):
             # 50% chance to be an anomaly node
-            node_type = 0 if random.random() < 0.5 else 1
+            node_type = 0 if random.random() < 0.1 else 1
             self.nodes.append(Node(node_type))
 
     def execute(self):
@@ -322,6 +322,7 @@ def return_anomalies_iqr(self, server,  multiplier=1.5):
     """
 
 def perform_chi_squared_test(server):
+
     true_positives = 0
     false_positives = 0
     true_negatives = 0
@@ -330,21 +331,19 @@ def perform_chi_squared_test(server):
     results=server.get_results()
     expected = [[1 for i in range(server.get_num_operations())] for j in range(server.get_num_nodes())]
 
-    #converting dict to matrix
-    rows=len(results)
-    cols=max(len(row) for row in results.values())
-    matrix=[[0]*cols for _ in range(rows)]
+    keys = list(results.keys())
+    values = list(results.values())
 
-    outdata=np.zeros(rows)
+    # Create a 2D NumPy array
+    numpy_array = np.array(values)
 
-    for i, key in enumerate(results):
-        for j, value in enumerate(results[key]):
-            matrix[i][j]=value
+    outdata=np.zeros(len(numpy_array))
+    size=len(numpy_array)
 
     # Perform chi-squared test
-    for i, row in enumerate(matrix):
+    for i, size in enumerate(numpy_array):
 
-        res = chisquare(f_obs=matrix[i])
+        res = chisquare(f_obs=numpy_array[i])
         print("Chi-squared Statistic ", i, ":" ,res.statistic)
         #print("P-value:", res.pvalue)
         if (res.statistic>100):
@@ -352,18 +351,24 @@ def perform_chi_squared_test(server):
             #print("Anomaly detected at node ", i)
 
         #true positive
-        if (res.statistic>100 & server.nodes[i].get_node_type() == 0):
+        if (res.statistic>100 and server.nodes[i].get_node_type() == 0):
             true_positives+=1
-        elif (res.statistic>100 & server.nodes[i].get_node_type() == 1):
+        elif (res.statistic>100 and server.nodes[i].get_node_type() == 1):
             false_positives+=1
-        elif (res.statistic<100 & server.nodes[i].get_node_type() == 0):
+        elif (res.statistic<100 and server.nodes[i].get_node_type() == 0):
             false_negatives+=1
-        elif (res.statistic<100 & server.nodes[i].get_node_type() == 1):
+        elif (res.statistic<100 and server.nodes[i].get_node_type() == 1):
             true_negatives+=1
 
-    return "Chi-Squared", outdata,true_negatives,true_positives,false_negatives,false_positives
+    total_nodes = true_positives + false_positives + true_negatives + false_negatives
+    success_rate = (true_positives + true_negatives) / total_nodes if total_nodes > 0 else 0
+    print(f"\nTrue Positives: {true_positives}")
+    print(f"False Positives: {false_positives}")
+    print(f"True Negatives: {true_negatives}")
+    print(f"False Negatives: {false_negatives}")
+    print(f"Success Rate: {success_rate:.2f}")
 
-
+    return "Chi-Squared", outdata,true_negatives,true_positives,false_negatives,false_positives,success_rate
 def apply_isolation_forest(server):
     # Preparing data with true labels
     data = {
