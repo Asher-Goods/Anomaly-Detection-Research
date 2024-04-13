@@ -28,7 +28,7 @@ class Node:
         self.node_type = node_type  # 1 for normal, 0 for anomaly
         if node_type == 1:
             # Normal nodes have a 3% chance of error
-            self.rand_number = 0.03
+            self.rand_number = 0.01
         else:
             # Anomaly nodes have a random chance of error between 25% and 80%
             self.rand_number = random.uniform(0.25, 0.8)
@@ -51,7 +51,7 @@ class Server:
 
         for _ in range(num_nodes):
             # 50% chance to be an anomaly node
-            node_type = 0 if random.random() < 0.1 else 1
+            node_type = 0 if random.random() < 0.5 else 1
             self.nodes.append(Node(node_type))
 
     def execute(self):
@@ -290,23 +290,23 @@ def detect_anomalies_iqr(server, multiplier=0):
     IQR = Q3 - Q1
 
     # Establish bounds for detecting anomalies
-    lower_bound = Q1-(IQR*.1)
-    upper_bound = Q3+(IQR*.1)
+    lower_bound = Q1-(IQR*.175)
+    upper_bound = Q3+(IQR*.175)
 
     # Initialize counters
     true_positives = 0
     false_positives = 0
     true_negatives = 0
     false_negatives = 0
-    nodes =[]
+    nodes = []
 
     # Evaluate each node based on its success rate and actual type
     for node_index, rate in enumerate(success_rates):
         actual_anomaly = server.nodes[node_index].get_node_type() == 0
         
-        print("lower_bound:", lower_bound)
-        print("rate:", rate)
-        print("upper_bound:", upper_bound)
+        # print("lower_bound:", lower_bound)
+        # print("rate:", rate)
+        # print("upper_bound:", upper_bound)
 
         detected_anomaly = rate < lower_bound or rate > upper_bound
 
@@ -405,7 +405,7 @@ def apply_isolation_forest(server):
     df = pd.DataFrame(data)
 
     # Applying Isolation Forest with a contamination factor of 0.1
-    isolation_forest = IsolationForest(n_estimators=100, random_state=42, contamination=0.01)
+    isolation_forest = IsolationForest(n_estimators=100, random_state=42, contamination=0.1)
     predictions = isolation_forest.fit_predict(df[['success_rate']])
     df['is_anomaly'] = [1 if x == -1 else 0 for x in predictions]
 
@@ -447,9 +447,11 @@ def main():
     print("Performing Z Test")
     nodes_z = perform_z_score_test(server)
 
+    #unused in report
     #print("Performing ML Anomaly Detection")
     #node_ml = perform_ML_test(server)
     
+    #unused in report
     print("\nPerforming Binomial Test")
     nodes_binom = perform_binomial_test(server)
 
